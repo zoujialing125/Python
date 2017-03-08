@@ -49,9 +49,9 @@ def download_image(basedir, strProxy=''):
     try:
         html = urllib.request.urlopen(urlGetJson, timeout=3).read()
     except (urllib.error.HTTPError, urllib.error.URLError) as e:
-        print('Cannot open the website(%s) because %s, please retry in browser manually...' % (urlGetJson, e))
+        print('Error: Cannot open the website(%s) because %s, please retry in browser manually...' % (urlGetJson, e))
     except (socket.timeout):
-        print('Accessing URL(%s) timeout...' % urlGetJson)
+        print('Error: Accessing URL(%s) timeout...' % urlGetJson)
     else:
         print('Downloading JSON string from bing.com...')
         jsonString = json.loads(html)
@@ -72,9 +72,9 @@ def download_image(basedir, strProxy=''):
             try:
                 imgBinary = urllib.request.urlopen(urlFull, timeout=3).read()
             except (urllib.error.HTTPError, urllib.error.URLError) as e:
-                print('Cannot open the website(%s) because %s, please retry in browser manually...' % (urlFull, e))
+                print('Error: Cannot open the website(%s) because %s, please retry in browser manually...' % (urlFull, e))
             except (socket.timeout):
-                print('Accessing URL(%s) timeout...' % (urlFull))
+                print('Error: Accessing URL(%s) timeout...' % (urlFull))
             else:
                 Image.open(BytesIO(imgBinary)).save(imgFullpath, 'bmp')
                 print('Image saved to (%s)...' % (imgFullpath))
@@ -91,7 +91,7 @@ def change_background(imgPath):
     win32api.RegSetValueEx(key, "WallpaperStyle", 0, win32con.REG_SZ, "0")
     win32api.RegSetValueEx(key, "TileWallpaper", 0, win32con.REG_SZ, "0")
     win32api.RegSetValueEx(key, "PicturePosition", 0, win32con.REG_SZ, "10")
-    win32gui.SystemParametersInfo(win32con.SPI_SETDESKWALLPAPER, imgPath, 1 | 2)
+    win32gui.SystemParametersInfo(win32con.SPI_SETDESKWALLPAPER, imgPath, 1 or 2)
     print('Background updated...')
     return
 
@@ -107,5 +107,16 @@ if not op.exists(imgdir):
     os.mkdir(imgdir)
 
 delete_old_image(imgdir)
-newImgPath = download_image(imgdir, '10.112.254.132:8887')
-change_background(newImgPath)
+
+newImgPath = ''
+tryround = 0
+while (tryround <= 5 and newImgPath == ''):
+    newImgPath = download_image(imgdir, '10.112.254.132:8887')
+    if newImgPath == '':
+        print('Error: Background download failed, start retry...')
+        tryround += 1
+
+if newImgPath != '':
+    change_background(newImgPath)
+else:
+    print('Error: Background update failed, please manually check if the website is available...')
